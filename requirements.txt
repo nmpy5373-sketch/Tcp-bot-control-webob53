@@ -1,4 +1,4 @@
-requests
+hurequests
 httpx
 google
 protobuf
@@ -12,3 +12,4 @@ aiohttp
 cfonts
 Flask
 Flask-SocketIO
+eventlet
