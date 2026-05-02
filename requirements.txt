@@ -1,4 +1,4 @@
-hurequests
+requests
 httpx
 google
 protobuf
