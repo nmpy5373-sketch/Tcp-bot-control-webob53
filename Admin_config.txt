@@ -1,2 +1,2 @@
-admin_password=SAMI
+admin_password=gop7838
 global_duration=999999999
