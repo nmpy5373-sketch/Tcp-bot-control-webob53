@@ -199,7 +199,7 @@ def bot_control():
             
             # সংশোধনী: sys.executable এর সাথে '-u' ফ্লাগ যুক্ত করা হয়েছে যেন লগ সাথে সাথে আসে
             proc = subprocess.Popen(
-                [sys.executable, '-u', 'app. py'], 
+                [sys.executable, '-u', 'main.py'], 
                 stdout=subprocess.PIPE, 
                 stderr=subprocess.STDOUT, 
                 text=True, 
@@ -265,109 +265,6 @@ if __name__ == '__main__':
     port = int(os.environ.get("PORT", 10000))
     # Render-এ রিয়েল-টাইম লগের জন্য host '0.0.0.0' হওয়া বাধ্যতামূলক
     socketio.run(app, host='0.0.0.0', port=port)
-        .logo-text { letter-spacing: 3px; font-weight: bold; font-size: 22px; }
-        .input-group { margin-bottom: 20px; }
-        .label { font-size: 12px; font-weight: bold; text-transform: uppercase; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; color: #999; }
-        input { width: 100%; padding: 14px; background-color: #0a0a0a; border: 1px solid #333; border-radius: 12px; color: #fff; box-sizing: border-box; transition: 0.3s; }
-        input:focus { border-color: #ff6b35; outline: none; box-shadow: 0 0 8px rgba(255, 107, 53, 0.3); }
-        .login-btn { background-color: #ff6b35; color: white; border: none; width: 100%; padding: 14px; border-radius: 12px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; text-transform: uppercase; font-size: 15px; margin-top: 10px; }
-        .login-btn:hover { background-color: #e55a2b; }
-        .info-footer { margin-top: 30px; background-color: #0a0a0a; padding: 15px; border-radius: 12px; font-size: 11px; text-align: center; color: #777; border: 1px solid #222; }
-        .info-footer span { color: #ff6b35; display: block; margin-bottom: 4px; font-weight: bold; }
-        #msg { color: #ff4444; font-size: 13px; text-align: center; margin-bottom: 15px; display: none; }
-    </style>
-</head>
-<body>
-    <div class="login-card">
-        <div class="logo-section">
-            <div class="logo-icon">🌐</div>
-            <div class="logo-text">LOGIN</div>
-        </div>
-        <div id="msg">Invalid credentials!</div>
-        <div class="input-group">
-            <div class="label">👤 Username</div>
-            <input type="text" id="u" placeholder="Enter 👇Username👇">
-        </div>
-        <div class="input-group">
-            <div class="label">🔒 Password</div>
-            <input type="password" id="p" placeholder="👇password👇">
-        </div>
-        <button class="login-btn" onclick="doLogin()">➜ LOGIN</button>
-        <div class="info-footer">
-            <span>ⓘ Default: admin / changeme123</span>
-            Developer SAMI !
-        </div>
-    </div>
-    <script>
-        async function doLogin() {
-            const u = document.getElementById('u').value;
-            const p = document.getElementById('p').value;
-            const msg = document.getElementById('msg');
-            const resp = await fetch('/api/login_auth', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({username: u, password: p})
-            });
-            const data = await resp.json();
-            if(data.status === 'success') {
-                window.location.href = '/';
-            } else {
-                msg.style.display = 'block';
-                setTimeout(() => { msg.style.display = 'none'; }, 3000);
-            }
-        }
-    </script>
-</body>
-</html>
-"""
-
-# অ্যাডমিন কনফিগারেশন লোড করা
-def get_config():
-    conf = {"pass": "admin123", "duration": 120}
-    if os.path.exists(ADMIN_CONFIG):
-        with open(ADMIN_CONFIG, 'r') as f:
-            for line in f:
-                if '=' in line:
-                    parts = line.strip().split('=')
-                    if len(parts) == 2:
-                        key, val = parts
-                        if key == 'admin_password': conf['pass'] = val
-                        if key == 'global_duration': conf['duration'] = int(val)
-    return conf
-
-# অ্যাডমিন কনফিগারেশন সেভ করা
-def save_config(password, duration):
-    with open(ADMIN_CONFIG, 'w') as f:
-        f.write(f"admin_password={password}\nglobal_duration={duration}\n")
-
-# লগইন চেক করার ডেকোরেটর
-def login_required(f):
-    def wrap(*args, **kwargs):
-        if 'logged_in' in session:
-            return f(*args, **kwargs)
-        return redirect(url_for('login'))
-    wrap.__name__ = f.__name__
-    return wrap
-
-# বটের এক্সপায়ারি চেক করার মনিটর
-def expiry_monitor():
-    while True:
-        now = datetime.now()
-        for name, data in list(user_sessions.items()):
-            if data['running'] and data['end_time'] != "unlimited":
-                if now > data['end_time']:
-                    if data['proc']:
-                        data['proc'].terminate()
-                    user_sessions[name]['running'] = False
-                    socketio.emit('status_update', {'running': False, 'user': name})
-        time.sleep(2)
-
-threading.Thread(target=expiry_monitor, daemon=True).start()
-
-def stream_logs(proc, name):
-    try:
-        # রিয়েল-টাইম লগের জন্য iter এবং readline ব্যবহার
-        for line in iter(proc.stdout.readline, ''):
             if line:
                 socketio.emit('new_log', {'data': line.strip(), 'user': name})
         proc.stdout.close()
